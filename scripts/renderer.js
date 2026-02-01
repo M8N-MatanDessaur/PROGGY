@@ -40,11 +40,26 @@ const Renderer = {
 
   /**
    * Update canvas size based on screen
+   * Accounts for devicePixelRatio for crisp rendering on high-DPI displays
    */
   updateCanvasSize() {
     const layout = Config.getLayout();
-    this.canvas.width = layout.canvasWidth;
-    this.canvas.height = layout.canvasHeight;
+    const dpr = window.devicePixelRatio || 1;
+
+    // Set actual canvas size (scaled for DPI)
+    this.canvas.width = layout.canvasWidth * dpr;
+    this.canvas.height = layout.canvasHeight * dpr;
+
+    // Set display size via CSS
+    this.canvas.style.width = layout.canvasWidth + 'px';
+    this.canvas.style.height = layout.canvasHeight + 'px';
+
+    // Reset transform and scale context to match DPI
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Re-disable image smoothing after context changes
+    this.ctx.imageSmoothingEnabled = false;
+
     this.layout = layout;
   },
 
@@ -77,8 +92,8 @@ const Renderer = {
 
   /**
    * Draw a sprite frame
-   * Sprites are black on transparent - in light mode they show as black
-   * In dark mode we need to invert them to show as white
+   * Sprites are white on black background
+   * Use blend modes to composite cleanly with the theme background
    */
   drawSprite(sprite, frameIndex, x, y, flipH = false) {
     if (!sprite || !sprite.complete) return;
@@ -97,9 +112,15 @@ const Renderer = {
       y = 0;
     }
 
-    // Apply light mode inversion - sprites are white, need to be black in light mode
-    if (!GameState.isDark) {
+    if (GameState.isDark) {
+      // Dark mode: white sprites on dark background - use screen blend
+      // Screen makes white visible and black transparent
+      ctx.globalCompositeOperation = 'screen';
+    } else {
+      // Light mode: invert to get black sprites, use multiply blend
+      // Multiply makes black visible and white transparent
       ctx.filter = 'invert(1)';
+      ctx.globalCompositeOperation = 'multiply';
     }
 
     ctx.drawImage(
@@ -111,6 +132,7 @@ const Renderer = {
     );
 
     ctx.filter = 'none';
+    ctx.globalCompositeOperation = 'source-over';
     ctx.restore();
   },
 
@@ -393,7 +415,7 @@ const Renderer = {
 
     // Exit (door icon)
     const exit = level.exit;
-    const doorPadding = Math.floor(tileSize * 0.15);
+    const doorPadding = Math.floor(tileSize * 0.22);
     const exitX = offsetX + exit.x * tileSize + doorPadding;
     const exitY = offsetY + exit.y * tileSize + doorPadding / 2;
     const doorW = tileSize - doorPadding * 2;
