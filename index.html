@@ -38,8 +38,47 @@
 
   <!-- Info Modal -->
   <div class="modal-overlay" id="infoModal">
-    <div class="modal">
+    <div class="modal modal-scrollable">
       <div class="modal-title">How to Play</div>
+      <div class="modal-scroll-hint">↓ Scroll for more ↓</div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Commands</div>
+        <div class="modal-row"><span class="key">MOVE</span><span>Step forward where your player faces</span></div>
+        <div class="modal-row"><span class="key">R-TURN</span><span>Rotate clockwise, change your gaze</span></div>
+        <div class="modal-row"><span class="key">L-TURN</span><span>Counter-clockwise, another way</span></div>
+        <div class="modal-row"><span class="key">WAIT</span><span>Stand still for just one tick today</span></div>
+        <div class="modal-row"><span class="key">FOR</span><span>Repeat indented lines N times</span></div>
+        <div class="modal-row"><span class="key">WHILE</span><span>Loop while condition still chimes</span></div>
+        <div class="modal-row"><span class="key">IF</span><span>Run indented lines when true</span></div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Enemies</div>
+        <div class="modal-row"><span class="key">PULSE</span><span>Destroys foes in cardinal sight</span></div>
+        <div class="modal-row"><span class="key">DEFEND</span><span>Shield yourself from fire's bite</span></div>
+        <p class="modal-text modal-poem">
+          Soft enemies patrol and roam<br>
+          One touch sends your player home<br>
+          Destroy them with a well-timed PULSE
+        </p>
+        <p class="modal-text modal-poem">
+          Hard enemies pulse every other beat<br>
+          DEFEND or PULSE to not face defeat
+        </p>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">The Goal</div>
+        <p class="modal-text modal-poem">
+          Reach the door, that is your aim<br>
+          Lines count - write code that's lean<br>
+          The fewer lines, the more pristine<br>
+          Ticks matter - time moves each step<br>
+          Fast solutions show your prep
+        </p>
+      </div>
+
       <div class="modal-section">
         <div class="modal-section-title">Controls</div>
         <div class="modal-row"><span class="key">↑↓</span><span>Navigate lines</span></div>
@@ -47,10 +86,7 @@
         <div class="modal-row"><span class="key">Enter</span><span>Edit command</span></div>
         <div class="modal-row"><span class="key">Wheel</span><span>Cycle / Scrub</span></div>
       </div>
-      <div class="modal-section">
-        <div class="modal-section-title">Commands</div>
-        <p class="modal-text">MOVE, R-TURN, L-TURN - Movement<br>PULSE - Kill enemies<br>DEFEND - Block attacks<br>FOR, WHILE, IF - Control flow</p>
-      </div>
+
       <div class="modal-section">
         <button class="modal-theme-toggle" id="modalThemeToggle">◐ Theme</button>
       </div>
@@ -159,6 +195,7 @@
           <div class="command-item">PULSE - Kill</div>
           <div class="command-item">DEFEND - Block</div>
         </div>
+        <a class="help-link" id="helpToggle">? More info</a>
       </div>
 
       <button class="theme-toggle" id="themeToggle">◐ Theme</button>

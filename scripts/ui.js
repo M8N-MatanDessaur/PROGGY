@@ -40,6 +40,7 @@ const UI = {
       // Theme toggles
       themeToggle: document.getElementById('themeToggle'),
       modalThemeToggle: document.getElementById('modalThemeToggle'),
+      helpToggle: document.getElementById('helpToggle'),
 
       // Mobile controls
       mobileUp: document.getElementById('mobileUp'),
@@ -96,15 +97,28 @@ const UI = {
       el.modalThemeToggle.addEventListener('click', () => Theme.toggle());
     }
 
-    // Mobile info modal
+    // Info modal (mobile and desktop)
     if (el.mobileInfoBtn) {
       el.mobileInfoBtn.addEventListener('click', () => {
+        el.infoModal.classList.add('active');
+      });
+    }
+    if (el.helpToggle) {
+      el.helpToggle.addEventListener('click', () => {
         el.infoModal.classList.add('active');
       });
     }
     if (el.modalClose) {
       el.modalClose.addEventListener('click', () => {
         el.infoModal.classList.remove('active');
+      });
+    }
+    // Close modal on overlay click
+    if (el.infoModal) {
+      el.infoModal.addEventListener('click', (e) => {
+        if (e.target === el.infoModal) {
+          el.infoModal.classList.remove('active');
+        }
       });
     }
 

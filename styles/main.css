@@ -160,7 +160,21 @@ body {
   padding: 0;
 }
 
-.theme-toggle:hover {
+.theme-toggle:hover,
+.help-toggle:hover {
+  opacity: 0.7;
+}
+
+.help-link {
+  display: block;
+  margin-top: 12px;
+  font-size: 10px;
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.help-link:hover {
   opacity: 0.7;
 }
 
@@ -280,7 +294,7 @@ body {
   background: var(--bg);
   border: 2px solid var(--ink);
   padding: 30px;
-  max-width: 320px;
+  max-width: 420px;
   width: 90%;
 }
 
@@ -307,13 +321,20 @@ body {
 
 .modal-row {
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
   font-size: 11px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  line-height: 1.4;
 }
 
 .modal-row .key {
   font-weight: 700;
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+.modal-row span:last-child {
+  color: var(--muted);
 }
 
 .modal-text {
@@ -345,6 +366,41 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
   cursor: pointer;
+}
+
+.modal-scrollable {
+  max-height: 80vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) var(--faint);
+}
+
+.modal-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-scrollable::-webkit-scrollbar-track {
+  background: var(--faint);
+}
+
+.modal-scrollable::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 3px;
+}
+
+.modal-scroll-hint {
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 15px;
+  opacity: 0.7;
+}
+
+.modal-poem {
+  font-style: italic;
+  margin-top: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--faint);
 }
 
 /* Mobile Header */

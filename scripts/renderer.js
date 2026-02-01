@@ -528,6 +528,44 @@ const Renderer = {
         ctx.fill();
         ctx.restore();
       }
+
+      // Directional arrow showing facing direction
+      const arrowDist = 12;  // Distance from player center to arrow
+      const halfBase = 3;    // Half the arrow base width
+      const arrowHeight = 5; // Arrow height from base to tip
+      const dir = sim.player.dir;
+
+      // Calculate arrow center position based on direction
+      let ax = playerCenterX;
+      let ay = playerCenterY;
+      if (dir === 0) ay = playerCenterY - arrowDist;      // Up
+      else if (dir === 1) ax = playerCenterX + arrowDist; // Right
+      else if (dir === 2) ay = playerCenterY + arrowDist; // Down
+      else ax = playerCenterX - arrowDist;                // Left
+
+      ctx.save();
+      ctx.translate(ax, ay);
+      ctx.rotate(dir * Math.PI / 2);
+
+      // Draw outline (background color) for visibility
+      ctx.fillStyle = Theme.getBG();
+      ctx.beginPath();
+      ctx.moveTo(0, -arrowHeight - 1);
+      ctx.lineTo(-halfBase - 1, 1);
+      ctx.lineTo(halfBase + 1, 1);
+      ctx.closePath();
+      ctx.fill();
+
+      // Draw arrow (ink color)
+      ctx.fillStyle = Theme.getINK();
+      ctx.beginPath();
+      ctx.moveTo(0, -arrowHeight);
+      ctx.lineTo(-halfBase, 0);
+      ctx.lineTo(halfBase, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
     } else {
       // Player is dead - draw death icon (X in circle)
       this.drawDeathIcon(playerCenterX, playerCenterY, 10);
