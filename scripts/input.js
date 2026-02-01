@@ -142,11 +142,20 @@ const Input = {
    * Code editor input
    */
   handleCodeInput(e) {
+    const isMobile = Config.isMobile();
+
     switch (GameState.editMode) {
       case 'browse':
         switch (e.key) {
           case 'ArrowUp':
-            Editor.cursorUp();
+            // On mobile, up at line 0 switches to grid (grid is above editor)
+            if (isMobile && GameState.cursorLine === 0) {
+              if (Editor.switchToGrid()) {
+                // Start simulation
+              }
+            } else {
+              Editor.cursorUp();
+            }
             break;
           case 'ArrowDown':
             Editor.cursorDown();
@@ -155,6 +164,7 @@ const Input = {
             Editor.decreaseIndent();
             break;
           case 'ArrowRight':
+            // Right switches to grid on both desktop and mobile (for button compatibility)
             if (Editor.switchToGrid()) {
               // Start simulation
             }
@@ -221,8 +231,19 @@ const Input = {
    * Grid (simulation) input
    */
   handleGridInput(e) {
+    const isMobile = Config.isMobile();
+
     switch (e.key) {
+      case 'ArrowDown':
+        // On mobile, down switches to code (editor is below grid)
+        if (isMobile) {
+          Editor.switchToCode();
+        }
+        break;
       case 'ArrowLeft':
+        // Left switches to code on both desktop and mobile (for button compatibility)
+        Editor.switchToCode();
+        break;
       case 'Escape':
         Editor.switchToCode();
         break;
