@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>PROGGY</title>
+  <meta name="description" content="A programming puzzle game. Write code to navigate a robot through mazes.">
+  <meta name="theme-color" content="#f4f1eb">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1a1a' width='100' height='100' rx='12'/><text x='50' y='68' text-anchor='middle' font-size='48' font-family='serif' font-weight='900' fill='%23f4f1eb'>P</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Playfair+Display:wght@400;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <!-- Header with game title -->
+  <div class="header">
+    <h1 class="title">PROGGY</h1>
+  </div>
+
+  <!-- Mobile Header -->
+  <div class="mobile-header">
+    <div class="mobile-stats">
+      <div class="mobile-stat">
+        <span class="mobile-label">Tick</span>
+        <span class="mobile-value" id="mobileTickDisplay">0</span>
+      </div>
+      <div class="mobile-stat">
+        <span class="mobile-label">P</span>
+        <span class="mobile-value" id="mobilePulsesDisplay">0</span>
+      </div>
+      <div class="mobile-stat">
+        <span class="mobile-label">D</span>
+        <span class="mobile-value" id="mobileDefendsDisplay">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <div class="modal-overlay" id="infoModal">
+    <div class="modal">
+      <div class="modal-title">How to Play</div>
+      <div class="modal-section">
+        <div class="modal-section-title">Controls</div>
+        <div class="modal-row"><span class="key">↑↓</span><span>Navigate lines</span></div>
+        <div class="modal-row"><span class="key">←→</span><span>Indent / Run</span></div>
+        <div class="modal-row"><span class="key">Enter</span><span>Edit command</span></div>
+        <div class="modal-row"><span class="key">Wheel</span><span>Cycle / Scrub</span></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Commands</div>
+        <p class="modal-text">MOVE, R-TURN, L-TURN - Movement<br>PULSE - Kill enemies<br>DEFEND - Block attacks<br>FOR, WHILE, IF - Control flow</p>
+      </div>
+      <div class="modal-section">
+        <button class="modal-theme-toggle" id="modalThemeToggle">◐ Theme</button>
+      </div>
+      <button class="modal-close" id="modalClose">Close</button>
+    </div>
+  </div>
+
+  <div class="game-wrapper">
+    <!-- Left Panel: Stats -->
+    <aside class="side-panel left-panel">
+      <div class="stat-box">
+        <div class="stat-label">TICKS</div>
+        <div class="stat-value" id="tickDisplay">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">LINES</div>
+        <div class="stat-value" id="linesDisplay">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">PULSES</div>
+        <div class="stat-value" id="pulsesDisplay">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">DEFENDS</div>
+        <div class="stat-value" id="defendsDisplay">0</div>
+      </div>
+    </aside>
+
+    <!-- Main Game Area -->
+    <main class="game-container">
+      <div class="canvas-wrapper">
+        <canvas id="gameCanvas" width="520" height="280"></canvas>
+
+        <!-- Start Screen Overlay -->
+        <div class="overlay" id="startScreen">
+          <div class="overlay-title">Ready</div>
+          <div class="overlay-description">
+            <p>Program your way to victory</p>
+            <p>Write code, use your mind</p>
+            <p>Turn the wheel to scrub through time</p>
+          </div>
+          <div class="overlay-instruction">Press space to begin</div>
+          <button class="start-btn" id="startBtn">Start</button>
+        </div>
+
+        <!-- Pause Overlay -->
+        <div class="overlay" id="pauseScreen" style="display: none;">
+          <div class="overlay-title">Paused</div>
+          <div class="overlay-instruction">Space: Resume</div>
+          <div class="overlay-instruction">Esc: New Level</div>
+        </div>
+
+        <!-- Success Overlay -->
+        <div class="overlay" id="successScreen" style="display: none;">
+          <div class="overlay-title">Complete!</div>
+          <div class="overlay-stats">
+            <span id="successTicks">0</span> ticks
+            <span id="successLines">0</span> lines
+          </div>
+          <div class="overlay-instruction">Press space for new level</div>
+          <button class="start-btn" id="nextBtn">Next Level</button>
+        </div>
+
+        <!-- Game Over Overlay -->
+        <div class="overlay" id="gameOverScreen" style="display: none;">
+          <div class="overlay-title">Failed</div>
+          <div class="overlay-subtitle">Robot was destroyed</div>
+          <div class="overlay-instruction">Space: Edit Code</div>
+          <div class="overlay-instruction">Esc: New Level</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Panel: Controls -->
+    <aside class="side-panel right-panel">
+      <div class="info-box">
+        <div class="info-title">Controls</div>
+        <div class="control-row">
+          <span class="control-key">↑↓</span>
+          <span class="control-desc">Navigate</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">←→</span>
+          <span class="control-desc">Indent/Run</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">Enter</span>
+          <span class="control-desc">Edit</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">Wheel</span>
+          <span class="control-desc">Scrub</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">Esc</span>
+          <span class="control-desc">Pause</span>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-title">Commands</div>
+        <div class="command-list">
+          <div class="command-item">MOVE - Forward</div>
+          <div class="command-item">R-TURN - Right 90°</div>
+          <div class="command-item">L-TURN - Left 90°</div>
+          <div class="command-item">PULSE - Kill</div>
+          <div class="command-item">DEFEND - Block</div>
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle">◐ Theme</button>
+    </aside>
+  </div>
+
+  <!-- Mobile Controls -->
+  <div class="mobile-controls">
+    <button class="mobile-control-btn" id="mobileUp" aria-label="Up">
+      <svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 8l-6 6h12z" fill="currentColor"/></svg>
+    </button>
+    <button class="mobile-control-btn" id="mobileDown" aria-label="Down">
+      <svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 16l-6-6h12z" fill="currentColor"/></svg>
+    </button>
+    <button class="mobile-control-btn" id="mobileEnter" aria-label="Enter">
+      <svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg>
+    </button>
+    <button class="mobile-control-btn" id="mobileLeft" aria-label="Left">
+      <svg viewBox="0 0 24 24" width="24" height="24"><path d="M15 18l-6-6 6-6z" fill="currentColor"/></svg>
+    </button>
+    <button class="mobile-control-btn" id="mobileRight" aria-label="Right">
+      <svg viewBox="0 0 24 24" width="24" height="24"><path d="M9 6l6 6-6 6z" fill="currentColor"/></svg>
+    </button>
+  </div>
+
+  <!-- Mobile Info Button -->
+  <button class="mobile-info-btn" id="mobileInfoBtn">?</button>
+
+  <!-- Scripts (in dependency order) -->
+  <script src="scripts/config.js"></script>
+  <script src="scripts/state.js"></script>
+  <script src="scripts/audio.js"></script>
+  <script src="scripts/theme.js"></script>
+  <script src="scripts/levels.js"></script>
+  <script src="scripts/simulation.js"></script>
+  <script src="scripts/editor.js"></script>
+  <script src="scripts/particles.js"></script>
+  <script src="scripts/renderer.js"></script>
+  <script src="scripts/ui.js"></script>
+  <script src="scripts/input.js"></script>
+  <script src="scripts/game.js"></script>
+</body>
+</html>
