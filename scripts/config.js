@@ -15,12 +15,22 @@ const Config = {
 
   // Editor settings
   CODE_LINES: 20,
-  VISIBLE_LINES: 9,  // Fits within content height with line spacing
-  EDITOR_WIDTH: 240,  // Wider to accommodate indentation
+  VISIBLE_LINES: 9,
+  EDITOR_WIDTH: 240,
   EDITOR_PADDING: 20,
-  GRID_OFFSET_X: 290,  // Shifted right to make room for wider editor
+  GRID_OFFSET_X: 290,
   GRID_PADDING_TOP: 20,
-  CONTENT_HEIGHT: 240,  // Same height for editor and grid (10 rows × 24px)
+  CONTENT_HEIGHT: 240,
+
+  // Mobile layout settings (stacked: grid on top, editor below)
+  MOBILE_BREAKPOINT: 900,
+  MOBILE_CANVAS_WIDTH: 320,
+  MOBILE_CANVAS_HEIGHT: 560,
+  MOBILE_TILE_SIZE: 32,
+  MOBILE_GRID_PADDING: 16,
+  MOBILE_EDITOR_HEIGHT: 200,
+  MOBILE_VISIBLE_LINES: 8,
+  MOBILE_EDITOR_PADDING: 16,
 
   // Sprite settings
   SPRITE_SIZE: 8,
@@ -59,10 +69,10 @@ const Config = {
 
   // Directions (0=up, 1=right, 2=down, 3=left)
   DIRECTIONS: [
-    { dx: 0, dy: -1 },  // Up
-    { dx: 1, dy: 0 },   // Right
-    { dx: 0, dy: 1 },   // Down
-    { dx: -1, dy: 0 }   // Left
+    { dx: 0, dy: -1 },
+    { dx: 1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: -1, dy: 0 }
   ],
 
   // Animation
@@ -80,13 +90,61 @@ const Config = {
   ERROR_DISPLAY_TIME: 90,
 
   // Crank simulation
-  CRANK_SENSITIVITY: 90,  // degrees per tick
+  CRANK_SENSITIVITY: 90,
 
   // Level count
-  TOTAL_LEVELS: 20
+  TOTAL_LEVELS: 20,
+
+  // Check if mobile layout should be used
+  isMobile: function() {
+    return window.innerWidth <= this.MOBILE_BREAKPOINT;
+  },
+
+  // Get current layout values based on screen size
+  getLayout: function() {
+    if (this.isMobile()) {
+      var tileSize = this.MOBILE_TILE_SIZE;
+      var gridWidth = this.GRID_COLS * tileSize;
+      var gridHeight = this.GRID_ROWS * tileSize;
+      var padding = this.MOBILE_GRID_PADDING;
+      var centerX = (this.MOBILE_CANVAS_WIDTH - gridWidth) / 2;
+      return {
+        canvasWidth: this.MOBILE_CANVAS_WIDTH,
+        canvasHeight: this.MOBILE_CANVAS_HEIGHT,
+        tileSize: tileSize,
+        gridOffsetX: centerX,
+        gridOffsetY: padding,
+        gridWidth: gridWidth,
+        gridHeight: gridHeight,
+        editorOffsetX: centerX,
+        editorOffsetY: padding + gridHeight + 16,
+        editorWidth: gridWidth,
+        editorHeight: this.MOBILE_EDITOR_HEIGHT,
+        editorPadding: this.MOBILE_EDITOR_PADDING,
+        visibleLines: this.MOBILE_VISIBLE_LINES,
+        isMobile: true
+      };
+    } else {
+      return {
+        canvasWidth: this.CANVAS_WIDTH,
+        canvasHeight: this.CANVAS_HEIGHT,
+        tileSize: this.TILE_SIZE,
+        gridOffsetX: this.GRID_OFFSET_X,
+        gridOffsetY: this.GRID_PADDING_TOP,
+        gridWidth: this.GRID_COLS * this.TILE_SIZE,
+        gridHeight: this.GRID_ROWS * this.TILE_SIZE,
+        editorOffsetX: this.EDITOR_PADDING,
+        editorOffsetY: this.EDITOR_PADDING,
+        editorWidth: this.EDITOR_WIDTH - this.EDITOR_PADDING * 2,
+        editorHeight: this.CONTENT_HEIGHT,
+        editorPadding: this.EDITOR_PADDING,
+        visibleLines: this.VISIBLE_LINES,
+        isMobile: false
+      };
+    }
+  }
 };
 
-Object.freeze(Config);
 Object.freeze(Config.COMMANDS);
 Object.freeze(Config.CONDITIONS);
 Object.freeze(Config.DIRECTIONS);

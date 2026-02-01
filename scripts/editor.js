@@ -31,13 +31,15 @@ const Editor = {
    */
   updateScroll() {
     const line = GameState.cursorLine;
+    const layout = Config.getLayout();
+    const visibleLines = layout.visibleLines;
     const visibleStart = GameState.scrollOffset;
-    const visibleEnd = visibleStart + Config.VISIBLE_LINES - 1;
+    const visibleEnd = visibleStart + visibleLines - 1;
 
     if (line < visibleStart) {
       GameState.scrollOffset = line;
     } else if (line > visibleEnd) {
-      GameState.scrollOffset = line - Config.VISIBLE_LINES + 1;
+      GameState.scrollOffset = line - visibleLines + 1;
     }
   },
 

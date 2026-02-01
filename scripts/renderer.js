@@ -15,6 +15,9 @@ const Renderer = {
   },
   spritesLoaded: false,
 
+  // Cached layout for current frame
+  layout: null,
+
   /**
    * Initialize canvas and load sprites
    */
@@ -25,8 +28,24 @@ const Renderer = {
     // Disable image smoothing for crisp pixel art
     this.ctx.imageSmoothingEnabled = false;
 
+    // Set initial canvas size
+    this.updateCanvasSize();
+
+    // Listen for resize events
+    window.addEventListener('resize', () => this.updateCanvasSize());
+
     // Load sprite images
     this.loadSprites();
+  },
+
+  /**
+   * Update canvas size based on screen
+   */
+  updateCanvasSize() {
+    const layout = Config.getLayout();
+    this.canvas.width = layout.canvasWidth;
+    this.canvas.height = layout.canvasHeight;
+    this.layout = layout;
   },
 
   /**
@@ -149,6 +168,9 @@ const Renderer = {
     const ctx = this.ctx;
     const canvas = this.canvas;
 
+    // Update layout cache
+    this.layout = Config.getLayout();
+
     // Apply shake effect
     let shakeX = 0, shakeY = 0;
     if (GameState.shakeTimer > 0) {
@@ -167,8 +189,14 @@ const Renderer = {
     // Draw based on game state
     // Title is handled by HTML overlay, so we just draw the game content
     if (GameState.status !== 'title') {
-      this.drawEditor();
-      this.drawGrid();
+      // On mobile, draw grid first (top), then editor (bottom)
+      if (this.layout.isMobile) {
+        this.drawGrid();
+        this.drawEditor();
+      } else {
+        this.drawEditor();
+        this.drawGrid();
+      }
       this.drawHUD();
     }
 
@@ -186,26 +214,31 @@ const Renderer = {
    */
   drawEditor() {
     const ctx = this.ctx;
+    const layout = this.layout;
     const code = GameState.code;
     const isFocused = GameState.focusArea === 'code';
-    const padding = Config.EDITOR_PADDING;
-    const editorHeight = Config.CONTENT_HEIGHT;
+
+    const offsetX = layout.editorOffsetX;
+    const offsetY = layout.editorOffsetY;
+    const editorWidth = layout.editorWidth;
+    const editorHeight = layout.editorHeight;
+    const visibleLines = layout.visibleLines;
 
     // Editor background
     ctx.fillStyle = Theme.getBG();
-    ctx.fillRect(padding, padding, Config.EDITOR_WIDTH - padding * 2, editorHeight);
+    ctx.fillRect(offsetX, offsetY, editorWidth, editorHeight);
 
     // Border
     ctx.strokeStyle = Theme.getINK();
     ctx.lineWidth = isFocused ? 3 : 1;
-    ctx.strokeRect(padding, padding, Config.EDITOR_WIDTH - padding * 2, editorHeight);
+    ctx.strokeRect(offsetX, offsetY, editorWidth, editorHeight);
 
     // Draw visible lines
     const startLine = GameState.scrollOffset;
-    const lineHeight = 24;
-    const paddingTop = padding + 12;  // Adjusted for better fit
+    const lineHeight = layout.isMobile ? 22 : 24;
+    const paddingTop = offsetY + 12;
 
-    for (let i = 0; i < Config.VISIBLE_LINES; i++) {
+    for (let i = 0; i < visibleLines; i++) {
       const lineIdx = startLine + i;
       if (lineIdx >= Config.CODE_LINES) break;
 
@@ -217,20 +250,20 @@ const Renderer = {
       const sim = GameState.simulation;
       if (sim && sim.executingLine === lineIdx && GameState.focusArea === 'grid') {
         ctx.fillStyle = Theme.getINK();
-        ctx.fillRect(padding + 2, y - 2, Config.EDITOR_WIDTH - padding * 2 - 4, lineHeight);
+        ctx.fillRect(offsetX + 2, y - 2, editorWidth - 4, lineHeight);
         ctx.fillStyle = Theme.getBG();
       } else {
         ctx.fillStyle = Theme.getINK();
       }
 
       // Line number
-      ctx.font = '400 10px "JetBrains Mono", monospace';
+      ctx.font = layout.isMobile ? '400 9px "JetBrains Mono", monospace' : '400 10px "JetBrains Mono", monospace';
       ctx.textAlign = 'right';
-      ctx.fillText(String(lineIdx + 1).padStart(2, '0'), padding + 22, y + 12);
+      ctx.fillText(String(lineIdx + 1).padStart(2, '0'), offsetX + 22, y + 12);
 
       // Indent visualization
-      const indentWidth = 12;
-      const indentX = padding + 28 + line.indent * indentWidth;
+      const indentWidth = layout.isMobile ? 10 : 12;
+      const indentX = offsetX + 28 + line.indent * indentWidth;
 
       // Cursor highlight
       if (isFocused && lineIdx === GameState.cursorLine) {
@@ -239,7 +272,7 @@ const Renderer = {
 
         if (GameState.editMode === 'browse') {
           ctx.globalAlpha = 0.15;
-          ctx.fillRect(padding + 26, y - 2, Config.EDITOR_WIDTH - padding * 2 - 28, lineHeight);
+          ctx.fillRect(offsetX + 26, y - 2, editorWidth - 28, lineHeight);
           ctx.globalAlpha = 1;
         } else if (GameState.editMode === 'line') {
           ctx.globalAlpha = 0.25;
@@ -255,7 +288,8 @@ const Renderer = {
 
       // Command text
       ctx.textAlign = 'left';
-      ctx.font = cmd.id === 0 ? '400 11px "JetBrains Mono", monospace' : '700 11px "JetBrains Mono", monospace';
+      const fontSize = layout.isMobile ? '10px' : '11px';
+      ctx.font = cmd.id === 0 ? `400 ${fontSize} "JetBrains Mono", monospace` : `700 ${fontSize} "JetBrains Mono", monospace`;
 
       if (sim && sim.executingLine === lineIdx && GameState.focusArea === 'grid') {
         ctx.fillStyle = Theme.getBG();
@@ -264,7 +298,7 @@ const Renderer = {
       ctx.fillText(cmd.name, indentX + 2, y + 12);
 
       if (cmd.hasParam) {
-        ctx.font = '400 11px "JetBrains Mono", monospace';
+        ctx.font = `400 ${fontSize} "JetBrains Mono", monospace`;
         const paramText = Editor.getParamDisplay(lineIdx);
         ctx.fillText(paramText, indentX + 64, y + 12);
       }
@@ -273,7 +307,7 @@ const Renderer = {
       if (sim && sim.stack.length > 0) {
         for (const block of sim.stack) {
           if (block.startLine === lineIdx && block.type === 'FOR') {
-            ctx.font = '400 9px "JetBrains Mono", monospace';
+            ctx.font = layout.isMobile ? '400 8px "JetBrains Mono", monospace' : '400 9px "JetBrains Mono", monospace';
             ctx.fillStyle = Theme.getMUTED();
             ctx.fillText(`[${block.iteration + 1}/${block.count}]`, indentX + 120, y + 12);
             break;
@@ -283,21 +317,21 @@ const Renderer = {
     }
 
     // Scroll indicator
-    if (Config.CODE_LINES > Config.VISIBLE_LINES) {
-      const scrollY = (GameState.scrollOffset / (Config.CODE_LINES - Config.VISIBLE_LINES)) *
-                      (editorHeight - 40) + padding + 20;
+    if (Config.CODE_LINES > visibleLines) {
+      const scrollY = (GameState.scrollOffset / (Config.CODE_LINES - visibleLines)) *
+                      (editorHeight - 40) + offsetY + 20;
       ctx.fillStyle = Theme.getMUTED();
-      ctx.fillRect(Config.EDITOR_WIDTH - padding - 4, scrollY - 10, 4, 20);
+      ctx.fillRect(offsetX + editorWidth - 6, scrollY - 10, 4, 20);
     }
 
     // Error message
     if (GameState.errorTimer > 0) {
       ctx.fillStyle = Theme.getINK();
-      ctx.fillRect(padding, padding + editorHeight - 24, Config.EDITOR_WIDTH - padding * 2, 24);
+      ctx.fillRect(offsetX, offsetY + editorHeight - 24, editorWidth, 24);
       ctx.fillStyle = Theme.getBG();
       ctx.font = '700 10px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(GameState.errorMessage, Config.EDITOR_WIDTH / 2, padding + editorHeight - 8);
+      ctx.fillText(GameState.errorMessage, offsetX + editorWidth / 2, offsetY + editorHeight - 8);
       GameState.errorTimer--;
     }
   },
@@ -307,12 +341,14 @@ const Renderer = {
    */
   drawGrid() {
     const ctx = this.ctx;
+    const layout = this.layout;
     const sim = GameState.simulation;
     const isFocused = GameState.focusArea === 'grid';
-    const offsetX = Config.GRID_OFFSET_X;
-    const offsetY = Config.GRID_PADDING_TOP;
-    const gridWidth = Config.GRID_COLS * Config.TILE_SIZE;
-    const gridHeight = Config.GRID_ROWS * Config.TILE_SIZE;
+    const offsetX = layout.gridOffsetX;
+    const offsetY = layout.gridOffsetY;
+    const tileSize = layout.tileSize;
+    const gridWidth = layout.gridWidth;
+    const gridHeight = layout.gridHeight;
 
     if (!sim) {
       ctx.strokeStyle = Theme.getFAINT();
@@ -333,14 +369,14 @@ const Renderer = {
     ctx.lineWidth = 1;
     for (let x = 1; x < Config.GRID_COLS; x++) {
       ctx.beginPath();
-      ctx.moveTo(offsetX + x * Config.TILE_SIZE, offsetY);
-      ctx.lineTo(offsetX + x * Config.TILE_SIZE, offsetY + gridHeight);
+      ctx.moveTo(offsetX + x * tileSize, offsetY);
+      ctx.lineTo(offsetX + x * tileSize, offsetY + gridHeight);
       ctx.stroke();
     }
     for (let y = 1; y < Config.GRID_ROWS; y++) {
       ctx.beginPath();
-      ctx.moveTo(offsetX, offsetY + y * Config.TILE_SIZE);
-      ctx.lineTo(offsetX + gridWidth, offsetY + y * Config.TILE_SIZE);
+      ctx.moveTo(offsetX, offsetY + y * tileSize);
+      ctx.lineTo(offsetX + gridWidth, offsetY + y * tileSize);
       ctx.stroke();
     }
 
@@ -348,19 +384,20 @@ const Renderer = {
     ctx.fillStyle = Theme.getINK();
     for (const wall of level.walls) {
       ctx.fillRect(
-        offsetX + wall.x * Config.TILE_SIZE,
-        offsetY + wall.y * Config.TILE_SIZE,
-        Config.TILE_SIZE,
-        Config.TILE_SIZE
+        offsetX + wall.x * tileSize,
+        offsetY + wall.y * tileSize,
+        tileSize,
+        tileSize
       );
     }
 
     // Exit (door icon)
     const exit = level.exit;
-    const exitX = offsetX + exit.x * Config.TILE_SIZE + 4;
-    const exitY = offsetY + exit.y * Config.TILE_SIZE + 2;
-    const doorW = Config.TILE_SIZE - 8;
-    const doorH = Config.TILE_SIZE - 4;
+    const doorPadding = Math.floor(tileSize * 0.15);
+    const exitX = offsetX + exit.x * tileSize + doorPadding;
+    const exitY = offsetY + exit.y * tileSize + doorPadding / 2;
+    const doorW = tileSize - doorPadding * 2;
+    const doorH = tileSize - doorPadding;
 
     ctx.strokeStyle = Theme.getINK();
     ctx.fillStyle = Theme.getINK();
@@ -374,8 +411,8 @@ const Renderer = {
     ctx.arc(exitX + doorW - 4, exitY + doorH / 2, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Hard enemy pulse indicators (X in square)
-    if (sim.tick % 2 === 0) {
+    // Hard enemy pulse indicators (X in square) - show on even ticks starting at tick 2
+    if (sim.tick > 0 && sim.tick % 2 === 0) {
       for (const enemy of sim.enemies) {
         if (!enemy.alive || enemy.type !== 'hard') continue;
 
@@ -385,9 +422,9 @@ const Renderer = {
           const py = enemy.y + dy;
           if (px >= 0 && px < Config.GRID_COLS && py >= 0 && py < Config.GRID_ROWS) {
             if (!level.walls.some(w => w.x === px && w.y === py)) {
-              const cx = offsetX + px * Config.TILE_SIZE + Config.TILE_SIZE / 2;
-              const cy = offsetY + py * Config.TILE_SIZE + Config.TILE_SIZE / 2;
-              this.drawPulseIcon(cx, cy, 14);
+              const cx = offsetX + px * tileSize + tileSize / 2;
+              const cy = offsetY + py * tileSize + tileSize / 2;
+              this.drawPulseIcon(cx, cy, Math.floor(tileSize * 0.6));
             }
           }
         }
@@ -403,8 +440,8 @@ const Renderer = {
     for (const enemy of sim.enemies) {
       if (!enemy.alive) continue;
 
-      const ex = offsetX + enemy.x * Config.TILE_SIZE + (Config.TILE_SIZE - spriteSize) / 2;
-      const ey = offsetY + enemy.y * Config.TILE_SIZE + (Config.TILE_SIZE - spriteSize) / 2;
+      const ex = offsetX + enemy.x * tileSize + (tileSize - spriteSize) / 2;
+      const ey = offsetY + enemy.y * tileSize + (tileSize - spriteSize) / 2;
       const frame = walkFrames[animIndex];
       const flipH = enemy.patrolDir < 0;
 
@@ -431,8 +468,8 @@ const Renderer = {
     }
 
     // Player
-    const px = offsetX + sim.player.x * Config.TILE_SIZE + (Config.TILE_SIZE - spriteSize) / 2;
-    const py = offsetY + sim.player.y * Config.TILE_SIZE + (Config.TILE_SIZE - spriteSize) / 2;
+    const px = offsetX + sim.player.x * tileSize + (tileSize - spriteSize) / 2;
+    const py = offsetY + sim.player.y * tileSize + (tileSize - spriteSize) / 2;
     const playerCenterX = px + spriteSize / 2;
     const playerCenterY = py + spriteSize / 2;
 
@@ -477,8 +514,8 @@ const Renderer = {
     // Pulse effect (X in square, expanding)
     if (GameState.pulseEffect) {
       const pe = GameState.pulseEffect;
-      const pcx = offsetX + pe.x * Config.TILE_SIZE + Config.TILE_SIZE / 2;
-      const pcy = offsetY + pe.y * Config.TILE_SIZE + Config.TILE_SIZE / 2;
+      const pcx = offsetX + pe.x * tileSize + tileSize / 2;
+      const pcy = offsetY + pe.y * tileSize + tileSize / 2;
 
       this.drawPulseIcon(pcx, pcy, pe.size);
 

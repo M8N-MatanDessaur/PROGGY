@@ -554,8 +554,8 @@ const Simulation = {
     const sim = GameState.simulation;
     const player = sim.player;
 
-    // Hard enemies pulse every 2 ticks
-    if (sim.tick % 2 !== 0) return;
+    // Hard enemies pulse every 2 ticks, starting at tick 2 (not tick 0)
+    if (sim.tick === 0 || sim.tick % 2 !== 0) return;
 
     let anyHardEnemy = false;
     for (const enemy of sim.enemies) {
