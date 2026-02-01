@@ -183,13 +183,7 @@ const Simulation = {
       const cmd = Config.COMMANDS[line.cmd];
       sim.executingLine = sim.ip;
 
-      // NOP - skip
-      if (cmd.id === 0) {
-        sim.ip++;
-        continue;
-      }
-
-      // Check if we're at the end of a block
+      // Check if we're at the end of a block (must happen before NOP skip)
       if (sim.stack.length > 0) {
         const topBlock = sim.stack[sim.stack.length - 1];
 
@@ -222,6 +216,12 @@ const Simulation = {
             continue;
           }
         }
+      }
+
+      // NOP - skip (after block end check so loops can terminate)
+      if (cmd.id === 0) {
+        sim.ip++;
+        continue;
       }
 
       // FOR
